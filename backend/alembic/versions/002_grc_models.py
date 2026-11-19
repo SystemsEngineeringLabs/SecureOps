@@ -4,29 +4,42 @@ Revision ID: 002
 Revises: 001
 Create Date: 2024-11-19
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSON, UUID
 
+from alembic import op
+
 revision: str = "002"
-down_revision: Union[str, None] = "001"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = "001"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def _ts_cols() -> list[sa.Column]:
     return [
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True
+        ),
     ]
 
 
 def _tenant_pk_cols() -> list[sa.Column]:
     return [
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("tenant_id", UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "tenant_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
     ]
 
 
@@ -45,14 +58,23 @@ def _enable_rls(table: str) -> None:
 # --- Enum types ---
 
 control_status = sa.Enum(
-    "not_started", "in_progress", "implemented", "not_applicable", "failed",
+    "not_started",
+    "in_progress",
+    "implemented",
+    "not_applicable",
+    "failed",
     name="control_status",
 )
 control_effectiveness = sa.Enum("none", "partial", "full", name="control_effectiveness")
 control_mapping_type = sa.Enum("equivalent", "partial", "related", name="control_mapping_type")
 
 risk_category = sa.Enum(
-    "operational", "technical", "compliance", "strategic", "financial", "reputational",
+    "operational",
+    "technical",
+    "compliance",
+    "strategic",
+    "financial",
+    "reputational",
     name="risk_category",
 )
 risk_likelihood = sa.Enum("very_low", "low", "medium", "high", "very_high", name="risk_likelihood")
@@ -62,7 +84,9 @@ risk_status = sa.Enum("open", "mitigating", "closed", "accepted", name="risk_sta
 
 evidence_status = sa.Enum("pending", "approved", "rejected", "expired", name="evidence_status")
 evidence_collection_method = sa.Enum("manual", "automated", name="evidence_collection_method")
-collection_run_status = sa.Enum("pending", "running", "completed", "failed", name="collection_run_status")
+collection_run_status = sa.Enum(
+    "pending", "running", "completed", "failed", name="collection_run_status"
+)
 
 policy_status = sa.Enum("draft", "published", "archived", name="policy_status")
 
@@ -83,17 +107,29 @@ _TENANT_RLS_TABLES = [
 def upgrade() -> None:
     bind = op.get_bind()
     for e in [
-        control_status, control_effectiveness, control_mapping_type,
-        risk_category, risk_likelihood, risk_impact, risk_treatment, risk_status,
-        evidence_status, evidence_collection_method, collection_run_status,
-        policy_status, vendor_risk_level, vendor_status,
+        control_status,
+        control_effectiveness,
+        control_mapping_type,
+        risk_category,
+        risk_likelihood,
+        risk_impact,
+        risk_treatment,
+        risk_status,
+        evidence_status,
+        evidence_collection_method,
+        collection_run_status,
+        policy_status,
+        vendor_risk_level,
+        vendor_status,
     ]:
         e.create(bind, checkfirst=True)
 
     # --- frameworks (system-wide, not tenant-scoped) ---
     op.create_table(
         "frameworks",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
         sa.Column("key", sa.String(50), unique=True, nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
@@ -105,8 +141,15 @@ def upgrade() -> None:
     # --- framework_versions ---
     op.create_table(
         "framework_versions",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("framework_id", UUID(as_uuid=True), sa.ForeignKey("frameworks.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "framework_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("frameworks.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("version", sa.String(50), nullable=False),
         sa.Column("effective_date", sa.Date(), nullable=True),
         sa.Column("is_current", sa.Boolean(), nullable=False, server_default=sa.text("true")),
@@ -119,13 +162,25 @@ def upgrade() -> None:
     # --- controls ---
     op.create_table(
         "controls",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("framework_version_id", UUID(as_uuid=True), sa.ForeignKey("framework_versions.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "framework_version_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("framework_versions.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("code", sa.String(50), nullable=False),
         sa.Column("title", sa.String(500), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("category", sa.String(255), nullable=True),
-        sa.Column("parent_id", UUID(as_uuid=True), sa.ForeignKey("controls.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "parent_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("controls.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("sort_order", sa.Integer(), nullable=False, server_default=sa.text("0")),
         *_ts_cols(),
         sa.UniqueConstraint("framework_version_id", "code", name="uq_control_framework_code"),
@@ -136,13 +191,29 @@ def upgrade() -> None:
     # --- control_mappings ---
     op.create_table(
         "control_mappings",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("source_control_id", UUID(as_uuid=True), sa.ForeignKey("controls.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("target_control_id", UUID(as_uuid=True), sa.ForeignKey("controls.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "source_control_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("controls.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "target_control_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("controls.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("mapping_type", control_mapping_type, nullable=False),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.UniqueConstraint("source_control_id", "target_control_id", name="uq_control_mapping_src_tgt"),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.UniqueConstraint(
+            "source_control_id", "target_control_id", name="uq_control_mapping_src_tgt"
+        ),
     )
     op.create_index("ix_control_mappings_source", "control_mappings", ["source_control_id"])
     op.create_index("ix_control_mappings_target", "control_mappings", ["target_control_id"])
@@ -151,10 +222,22 @@ def upgrade() -> None:
     op.create_table(
         "tenant_control_statuses",
         *_tenant_pk_cols(),
-        sa.Column("control_id", UUID(as_uuid=True), sa.ForeignKey("controls.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("status", control_status, nullable=False, server_default=sa.text("'not_started'")),
+        sa.Column(
+            "control_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("controls.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "status", control_status, nullable=False, server_default=sa.text("'not_started'")
+        ),
         sa.Column("effectiveness", control_effectiveness, nullable=True),
-        sa.Column("owner_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "owner_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("last_assessed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("next_review_at", sa.DateTime(timezone=True), nullable=True),
@@ -162,9 +245,17 @@ def upgrade() -> None:
         *_ts_cols(),
         sa.UniqueConstraint("tenant_id", "control_id", name="uq_tenant_control_status"),
     )
-    op.create_index("ix_tenant_control_statuses_tenant_id", "tenant_control_statuses", ["tenant_id"])
-    op.create_index("ix_tenant_control_statuses_control_id", "tenant_control_statuses", ["control_id"])
-    op.create_index("ix_tenant_control_statuses_tenant_status", "tenant_control_statuses", ["tenant_id", "status"])
+    op.create_index(
+        "ix_tenant_control_statuses_tenant_id", "tenant_control_statuses", ["tenant_id"]
+    )
+    op.create_index(
+        "ix_tenant_control_statuses_control_id", "tenant_control_statuses", ["control_id"]
+    )
+    op.create_index(
+        "ix_tenant_control_statuses_tenant_status",
+        "tenant_control_statuses",
+        ["tenant_id", "status"],
+    )
 
     # --- risks (tenant-scoped) ---
     op.create_table(
@@ -183,7 +274,12 @@ def upgrade() -> None:
         sa.Column("residual_impact", risk_impact, nullable=True),
         sa.Column("residual_score", sa.Float(), nullable=True),
         sa.Column("status", risk_status, nullable=False, server_default=sa.text("'open'")),
-        sa.Column("owner_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "owner_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("due_date", sa.Date(), nullable=True),
         sa.Column("related_control_ids", JSON, nullable=True),
         sa.Column("last_reviewed_at", sa.DateTime(timezone=True), nullable=True),
@@ -207,13 +303,33 @@ def upgrade() -> None:
         sa.Column("storage_backend", sa.String(50), nullable=False),
         sa.Column("sha256_hash", sa.String(64), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False, server_default=sa.text("1")),
-        sa.Column("previous_version_id", UUID(as_uuid=True), sa.ForeignKey("evidence.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "previous_version_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("evidence.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("status", evidence_status, nullable=False, server_default=sa.text("'pending'")),
-        sa.Column("uploaded_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=False),
-        sa.Column("approved_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "uploaded_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=False,
+        ),
+        sa.Column(
+            "approved_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("collection_method", evidence_collection_method, nullable=False, server_default=sa.text("'manual'")),
+        sa.Column(
+            "collection_method",
+            evidence_collection_method,
+            nullable=False,
+            server_default=sa.text("'manual'"),
+        ),
         sa.Column("source", sa.String(100), nullable=True),
         sa.Column("tags", JSON, nullable=True),
         *_ts_cols(),
@@ -226,11 +342,25 @@ def upgrade() -> None:
     op.create_table(
         "control_evidence",
         *_tenant_pk_cols(),
-        sa.Column("control_id", UUID(as_uuid=True), sa.ForeignKey("controls.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("evidence_id", UUID(as_uuid=True), sa.ForeignKey("evidence.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "control_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("controls.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "evidence_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("evidence.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True
+        ),
         sa.UniqueConstraint("tenant_id", "control_id", "evidence_id", name="uq_control_evidence"),
     )
     op.create_index("ix_control_evidence_tenant_id", "control_evidence", ["tenant_id"])
@@ -242,7 +372,9 @@ def upgrade() -> None:
         "evidence_collection_runs",
         *_tenant_pk_cols(),
         sa.Column("source", sa.String(100), nullable=False),
-        sa.Column("status", collection_run_status, nullable=False, server_default=sa.text("'pending'")),
+        sa.Column(
+            "status", collection_run_status, nullable=False, server_default=sa.text("'pending'")
+        ),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("evidence_count", sa.Integer(), nullable=False, server_default=sa.text("0")),
@@ -250,7 +382,9 @@ def upgrade() -> None:
         sa.Column("metadata", JSON, nullable=True),
         *_ts_cols(),
     )
-    op.create_index("ix_evidence_collection_runs_tenant_id", "evidence_collection_runs", ["tenant_id"])
+    op.create_index(
+        "ix_evidence_collection_runs_tenant_id", "evidence_collection_runs", ["tenant_id"]
+    )
 
     # --- policies (tenant-scoped) ---
     op.create_table(
@@ -261,11 +395,21 @@ def upgrade() -> None:
         sa.Column("category", sa.String(100), nullable=True),
         sa.Column("version", sa.Integer(), nullable=False, server_default=sa.text("1")),
         sa.Column("status", policy_status, nullable=False, server_default=sa.text("'draft'")),
-        sa.Column("approved_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "approved_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("effective_date", sa.Date(), nullable=True),
         sa.Column("review_date", sa.Date(), nullable=True),
-        sa.Column("owner_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "owner_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("tags", JSON, nullable=True),
         *_ts_cols(),
     )
@@ -289,7 +433,12 @@ def upgrade() -> None:
         sa.Column("last_assessment_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("next_assessment_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
-        sa.Column("owner_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "owner_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         *_ts_cols(),
     )
     op.create_index("ix_vendors_tenant_id", "vendors", ["tenant_id"])
@@ -320,10 +469,19 @@ def downgrade() -> None:
 
     bind = op.get_bind()
     for e in [
-        vendor_status, vendor_risk_level,
+        vendor_status,
+        vendor_risk_level,
         policy_status,
-        collection_run_status, evidence_collection_method, evidence_status,
-        risk_status, risk_treatment, risk_impact, risk_likelihood, risk_category,
-        control_mapping_type, control_effectiveness, control_status,
+        collection_run_status,
+        evidence_collection_method,
+        evidence_status,
+        risk_status,
+        risk_treatment,
+        risk_impact,
+        risk_likelihood,
+        risk_category,
+        control_mapping_type,
+        control_effectiveness,
+        control_status,
     ]:
         e.drop(bind, checkfirst=True)

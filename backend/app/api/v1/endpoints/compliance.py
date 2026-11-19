@@ -79,7 +79,9 @@ async def list_controls(
     svc = ComplianceService(db)
     version = await svc.get_framework_version(version_id)
     if version is None or version.framework_id != framework_id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Framework version not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Framework version not found"
+        )
     controls = await svc.list_controls(version_id, category=category)
     return [ControlResponse.model_validate(c) for c in controls]
 
@@ -95,6 +97,11 @@ async def list_control_categories(
     db: AsyncSession = Depends(get_tenant_db),
 ) -> list[str]:
     svc = ComplianceService(db)
+    version = await svc.get_framework_version(version_id)
+    if version is None or version.framework_id != framework_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Framework version not found"
+        )
     return await svc.get_control_categories(version_id)
 
 

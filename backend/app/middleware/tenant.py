@@ -7,14 +7,16 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from app.core.config import settings
 from app.core.tenant_context import clear_tenant, set_tenant
 
-PUBLIC_PATHS = frozenset({
-    "/health",
-    "/api/v1/docs",
-    "/api/v1/openapi.json",
-    "/api/v1/auth/register",
-    "/api/v1/auth/login",
-    "/api/v1/auth/refresh",
-})
+PUBLIC_PATHS = frozenset(
+    {
+        "/health",
+        "/api/v1/docs",
+        "/api/v1/openapi.json",
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+    }
+)
 
 PUBLIC_PREFIXES = (
     "/api/v1/docs",
@@ -23,9 +25,7 @@ PUBLIC_PREFIXES = (
 
 
 class TenantMiddleware(BaseHTTPMiddleware):
-    async def dispatch(
-        self, request: Request, call_next: RequestResponseEndpoint
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
 
         if path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PREFIXES):
@@ -35,8 +35,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
             tenant_id = self._extract_tenant_from_token(request)
             if tenant_id is not None:
                 set_tenant(tenant_id)
-            response = await call_next(request)
-            return response
+            return await call_next(request)
         finally:
             clear_tenant()
 
@@ -48,9 +47,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
 
         token = auth_header.removeprefix("Bearer ")
         try:
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
             tenant_id_str = payload.get("tenant_id")
             if tenant_id_str:
                 return UUID(tenant_id_str)

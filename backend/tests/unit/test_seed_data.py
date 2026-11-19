@@ -1,7 +1,5 @@
 """Tests for seed data integrity — SOC 2, ISO 27001, and cross-framework mappings."""
 
-import pytest
-
 from app.db.seed import CROSS_MAPPINGS, ISO27001_CONTROLS, SOC2_CONTROLS
 from app.models.enums import ControlMappingType
 
@@ -119,7 +117,9 @@ class TestCrossFrameworkMappings:
 
     def test_notes_not_empty(self):
         for mapping in CROSS_MAPPINGS:
-            assert len(mapping["notes"]) > 10, f"Notes too short for {mapping['soc2']}->{mapping['iso']}"
+            assert len(mapping["notes"]) > 10, (
+                f"Notes too short for {mapping['soc2']}->{mapping['iso']}"
+            )
 
     def test_no_exact_duplicate_mappings(self):
         pairs = [(m["soc2"], m["iso"]) for m in CROSS_MAPPINGS]

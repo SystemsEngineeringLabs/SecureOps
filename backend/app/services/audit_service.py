@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -19,7 +20,7 @@ class AuditService:
         user_id: UUID | None = None,
         resource_type: str | None = None,
         resource_id: UUID | None = None,
-        details: dict | None = None,
+        details: dict[str, Any] | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> AuditEvent:
@@ -65,9 +66,7 @@ class AuditService:
         if until is not None:
             base = base.where(AuditEvent.created_at <= until)
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         rows_result = await self.db.execute(

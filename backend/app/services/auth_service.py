@@ -1,6 +1,6 @@
 import re
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,7 +48,7 @@ async def register(
         email=data.email,
         hashed_password=hash_password(data.password),
         full_name=data.full_name.strip(),
-        last_login_at=datetime.now(timezone.utc),
+        last_login_at=datetime.now(UTC),
     )
     db.add(user)
     await db.flush()
@@ -77,7 +77,7 @@ async def authenticate(
         return None
     if not user.is_active:
         return None
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     db.add(user)
     await db.flush()
     return user

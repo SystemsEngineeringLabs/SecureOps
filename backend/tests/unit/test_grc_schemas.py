@@ -9,7 +9,6 @@ from pydantic import ValidationError
 from app.models.enums import (
     ControlEffectiveness,
     ControlStatus,
-    EvidenceStatus,
     PolicyStatus,
     RiskCategory,
     RiskImpact,

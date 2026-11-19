@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,7 +11,7 @@ class AuditEventResponse(BaseModel):
     resource_type: str | None = None
     resource_id: UUID | None = None
     user_id: UUID | None = None
-    details: dict | None = None
+    details: dict[str, Any] | None = None
     ip_address: str | None = None
     created_at: datetime
 

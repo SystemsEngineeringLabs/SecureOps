@@ -1,20 +1,32 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_model import Base, TenantScopedBase, TimestampMixin
 from app.models.enums import ControlEffectiveness, ControlMappingType, ControlStatus
 
+if TYPE_CHECKING:
+    from app.models.framework import FrameworkVersion
+
 
 class Control(TimestampMixin, Base):
     __tablename__ = "controls"
     __table_args__ = (
-        UniqueConstraint(
-            "framework_version_id", "code", name="uq_control_framework_code"
-        ),
+        UniqueConstraint("framework_version_id", "code", name="uq_control_framework_code"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -42,9 +54,7 @@ class Control(TimestampMixin, Base):
     framework_version: Mapped["FrameworkVersion"] = relationship(  # noqa: F821
         back_populates="controls"
     )
-    parent: Mapped["Control | None"] = relationship(
-        remote_side="Control.id", backref="children"
-    )
+    parent: Mapped["Control | None"] = relationship(remote_side="Control.id", backref="children")
     source_mappings: Mapped[list["ControlMapping"]] = relationship(
         foreign_keys="ControlMapping.source_control_id",
         back_populates="source_control",
@@ -109,11 +119,7 @@ class ControlMapping(Base):
 
 class TenantControlStatus(TenantScopedBase, Base):
     __tablename__ = "tenant_control_statuses"
-    __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "control_id", name="uq_tenant_control_status"
-        ),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "control_id", name="uq_tenant_control_status"),)
 
     control_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -139,12 +145,13 @@ class TenantControlStatus(TenantScopedBase, Base):
     last_assessed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    next_review_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    next_review_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     evidence_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     control: Mapped["Control"] = relationship()
 
     def __repr__(self) -> str:
-        return f"<TenantControlStatus tenant={self.tenant_id} control={self.control_id} status={self.status}>"
+        return (
+            f"<TenantControlStatus tenant={self.tenant_id} "
+            f"control={self.control_id} status={self.status}>"
+        )

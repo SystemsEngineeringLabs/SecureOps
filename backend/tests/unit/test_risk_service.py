@@ -1,6 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
-from unittest.mock import AsyncMock, MagicMock
+from datetime import date
 
 import pytest
 
@@ -8,13 +7,11 @@ from app.models.enums import (
     RiskCategory,
     RiskImpact,
     RiskLikelihood,
-    RiskStatus,
     RiskTreatment,
 )
 from app.models.risk import IMPACT_SCORES, LIKELIHOOD_SCORES, compute_risk_score
 from app.schemas.risk import (
     RiskCreateRequest,
-    RiskHeatmapCell,
     RiskQueryParams,
     RiskSummary,
     RiskUpdateRequest,

@@ -20,6 +20,7 @@ from app.schemas.evidence import (
 )
 from app.services.evidence_service import EvidenceService
 from app.services.storage.factory import get_storage_backend
+from app.services.storage.local import content_disposition
 
 router = APIRouter(prefix="/evidence", tags=["Evidence"])
 
@@ -37,9 +38,7 @@ async def upload_evidence(
     description: str | None = Query(default=None),
     control_ids: list[uuid.UUID] | None = Query(default=None),
     tags: list[str] | None = Query(default=None),
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.WRITE)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.WRITE)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceResponse:
     user, membership = auth
@@ -66,9 +65,7 @@ async def list_evidence(
     uploaded_by: uuid.UUID | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.READ)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.READ)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceListResponse:
     _, membership = auth
@@ -91,9 +88,7 @@ async def list_evidence(
 
 @router.get("/summary", response_model=EvidenceSummary)
 async def evidence_summary(
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.READ)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.READ)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceSummary:
     _, membership = auth
@@ -103,9 +98,7 @@ async def evidence_summary(
 @router.get("/{evidence_id}", response_model=EvidenceResponse)
 async def get_evidence(
     evidence_id: uuid.UUID,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.READ)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.READ)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceResponse:
     _, membership = auth
@@ -117,9 +110,7 @@ async def get_evidence(
 async def update_evidence(
     evidence_id: uuid.UUID,
     data: EvidenceUpdateRequest,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.WRITE)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.WRITE)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceResponse:
     _, membership = auth
@@ -131,9 +122,7 @@ async def update_evidence(
 async def approve_evidence(
     evidence_id: uuid.UUID,
     data: EvidenceApproveRequest,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.ADMIN)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.ADMIN)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> EvidenceResponse:
     user, membership = auth
@@ -146,20 +135,16 @@ async def approve_evidence(
 @router.get("/{evidence_id}/download")
 async def download_evidence(
     evidence_id: uuid.UUID,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.READ)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.READ)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> Response:
     _, membership = auth
-    content, evidence = await service.download_evidence(
-        membership.tenant_id, evidence_id
-    )
+    content, evidence = await service.download_evidence(membership.tenant_id, evidence_id)
     return Response(
         content=content,
         media_type=evidence.content_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{evidence.file_name}"',
+            "Content-Disposition": content_disposition(evidence.file_name),
         },
     )
 
@@ -167,9 +152,7 @@ async def download_evidence(
 @router.delete("/{evidence_id}", status_code=204)
 async def delete_evidence(
     evidence_id: uuid.UUID,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.DELETE)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.DELETE)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> None:
     _, membership = auth
@@ -179,9 +162,7 @@ async def delete_evidence(
 @router.get("/by-control/{control_id}", response_model=list[EvidenceResponse])
 async def get_evidence_by_control(
     control_id: uuid.UUID,
-    auth: tuple[User, Membership] = Depends(
-        require_permission(Resource.EVIDENCE, Action.READ)
-    ),
+    auth: tuple[User, Membership] = Depends(require_permission(Resource.EVIDENCE, Action.READ)),
     service: EvidenceService = Depends(_get_evidence_service),
 ) -> list[EvidenceResponse]:
     _, membership = auth

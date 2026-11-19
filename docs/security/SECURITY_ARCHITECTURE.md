@@ -13,7 +13,7 @@
 
 ## 1. Authentication
 
-SecureOps uses JWT-based authentication with short-lived access tokens and longer-lived refresh tokens. No custom cryptographic primitives are used — all crypto operations rely on `python-jose` (JOSE/JWK standards) and `passlib` with bcrypt.
+SecureOps uses JWT-based authentication with short-lived access tokens and longer-lived refresh tokens. No custom cryptographic primitives are used — all crypto operations rely on `python-jose` (JOSE/JWK standards) and the `bcrypt` library (cost 12, 72-byte input limit enforced; see ADR-004).
 
 ### Token Architecture
 

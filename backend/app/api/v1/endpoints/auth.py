@@ -1,3 +1,5 @@
+import uuid
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,8 +10,8 @@ from app.db.base import get_db
 from app.models.user import User
 from app.schemas.auth import (
     LoginRequest,
-    MeResponse,
     MembershipResponse,
+    MeResponse,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
@@ -35,7 +37,7 @@ async def register(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(e),
-        )
+        ) from None
     return auth_service.generate_tokens(user.id, tenant.id, membership.role.value)
 
 
@@ -85,7 +87,7 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
-        )
+        ) from None
 
     if payload.get("type") != "refresh":
         raise HTTPException(
@@ -95,27 +97,37 @@ async def refresh_token(
 
     user_id_str = payload.get("sub")
     tenant_id_str = payload.get("tenant_id")
-    role = payload.get("role")
-    if not all([user_id_str, tenant_id_str, role]):
+    if not user_id_str or not tenant_id_str:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token payload",
         )
+    try:
+        user_id = uuid.UUID(user_id_str)
+        tenant_id = uuid.UUID(tenant_id_str)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token payload",
+        ) from None
 
-    import uuid
-
-    user = await auth_service.get_user_by_id(db, uuid.UUID(user_id_str))
+    user = await auth_service.get_user_by_id(db, user_id)
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
         )
 
-    return auth_service.generate_tokens(
-        uuid.UUID(user_id_str),
-        uuid.UUID(tenant_id_str),
-        role,
-    )
+    # Re-check live membership: a removed or demoted user must not be able to
+    # mint tokens carrying a tenant or role they no longer hold.
+    membership = await auth_service.get_membership(db, user_id, tenant_id)
+    if membership is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No active membership in this tenant",
+        )
+
+    return auth_service.generate_tokens(user_id, tenant_id, membership.role.value)
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)

@@ -34,7 +34,22 @@ class TestBlockedExtensions:
 
     @pytest.mark.parametrize(
         "ext",
-        [".exe", ".bat", ".cmd", ".sh", ".ps1", ".dll", ".so", ".msi", ".com", ".scr", ".vbs", ".js", ".wsf", ".pif"],
+        [
+            ".exe",
+            ".bat",
+            ".cmd",
+            ".sh",
+            ".ps1",
+            ".dll",
+            ".so",
+            ".msi",
+            ".com",
+            ".scr",
+            ".vbs",
+            ".js",
+            ".wsf",
+            ".pif",
+        ],
     )
     def test_all_dangerous_extensions_blocked(self, ext):
         assert ext in BLOCKED_EXTENSIONS
@@ -54,10 +69,16 @@ class TestAllowedContentTypes:
         assert "application/json" in ALLOWED_CONTENT_TYPES
 
     def test_xlsx_allowed(self):
-        assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in ALLOWED_CONTENT_TYPES
+        assert (
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            in ALLOWED_CONTENT_TYPES
+        )
 
     def test_docx_allowed(self):
-        assert "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in ALLOWED_CONTENT_TYPES
+        assert (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            in ALLOWED_CONTENT_TYPES
+        )
 
     def test_html_not_allowed(self):
         assert "text/html" not in ALLOWED_CONTENT_TYPES

@@ -32,6 +32,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      SECUREOPS_ENVIRONMENT: development
       SECUREOPS_DATABASE_URL: postgresql+asyncpg://secureops:secureops@db:5432/secureops
       SECUREOPS_REDIS_URL: redis://redis:6379/0
       SECUREOPS_CELERY_BROKER_URL: redis://redis:6379/1
@@ -51,6 +52,7 @@ services:
       dockerfile: Dockerfile
     command: celery -A app.workers.celery_app worker --loglevel=info --concurrency=2
     environment:
+      SECUREOPS_ENVIRONMENT: development
       SECUREOPS_DATABASE_URL: postgresql+asyncpg://secureops:secureops@db:5432/secureops
       SECUREOPS_REDIS_URL: redis://redis:6379/0
       SECUREOPS_CELERY_BROKER_URL: redis://redis:6379/1

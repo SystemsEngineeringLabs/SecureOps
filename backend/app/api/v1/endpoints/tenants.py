@@ -22,7 +22,7 @@ router = APIRouter(prefix="/tenants", tags=["tenants"])
 @router.get("/current", response_model=TenantResponse)
 async def get_current_tenant(
     db: AsyncSession = Depends(get_tenant_db),
-    auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.READ)),
+    _auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.READ)),
 ) -> TenantResponse:
     tenant_id = get_tenant()
     tenant = await tenant_service.get_tenant(db, tenant_id)
@@ -33,7 +33,7 @@ async def get_current_tenant(
 async def update_current_tenant(
     data: TenantUpdateRequest,
     db: AsyncSession = Depends(get_tenant_db),
-    auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.WRITE)),
+    _auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.WRITE)),
 ) -> TenantResponse:
     tenant_id = get_tenant()
     tenant = await tenant_service.update_tenant(db, tenant_id, data)
@@ -43,7 +43,7 @@ async def update_current_tenant(
 @router.get("/current/members", response_model=list[TenantMemberResponse])
 async def list_tenant_members(
     db: AsyncSession = Depends(get_tenant_db),
-    auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.READ)),
+    _auth: tuple[User, Membership] = Depends(require_permission(Resource.ADMIN, Action.READ)),
 ) -> list[TenantMemberResponse]:
     tenant_id = get_tenant()
     members = await tenant_service.list_members(db, tenant_id)
@@ -62,9 +62,7 @@ async def invite_tenant_member(
         db, tenant_id, data.email, data.role, invited_by=membership.user_id
     )
 
-    user_result = await db.execute(
-        select(User).where(User.id == new_membership.user_id)
-    )
+    user_result = await db.execute(select(User).where(User.id == new_membership.user_id))
     user = user_result.scalar_one()
 
     return TenantMemberResponse(

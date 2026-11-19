@@ -1,8 +1,12 @@
+import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
+# Must be set before app.core.config is imported (Settings() runs at import time).
+os.environ.setdefault("SECUREOPS_ENVIRONMENT", "test")
+
+import pytest  # noqa: E402
 
 from app.core.security import hash_password
 from app.models.enums import MembershipRole
@@ -37,8 +41,8 @@ def sample_tenant(tenant_id):
     tenant.slug = "acme-security-corp"
     tenant.is_active = True
     tenant.settings = None
-    tenant.created_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
-    tenant.updated_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
+    tenant.created_at = datetime(2024, 1, 15, tzinfo=UTC)
+    tenant.updated_at = datetime(2024, 1, 15, tzinfo=UTC)
     return tenant
 
 
@@ -54,8 +58,8 @@ def sample_user(user_id):
     user.mfa_enabled = False
     user.mfa_secret = None
     user.last_login_at = None
-    user.created_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
-    user.updated_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
+    user.created_at = datetime(2024, 1, 15, tzinfo=UTC)
+    user.updated_at = datetime(2024, 1, 15, tzinfo=UTC)
     return user
 
 
@@ -68,9 +72,9 @@ def sample_membership(tenant_id, user_id):
     membership.role = MembershipRole.ORG_ADMIN
     membership.is_active = True
     membership.invited_by = None
-    membership.joined_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
-    membership.created_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
-    membership.updated_at = datetime(2024, 1, 15, tzinfo=timezone.utc)
+    membership.joined_at = datetime(2024, 1, 15, tzinfo=UTC)
+    membership.created_at = datetime(2024, 1, 15, tzinfo=UTC)
+    membership.updated_at = datetime(2024, 1, 15, tzinfo=UTC)
     return membership
 
 

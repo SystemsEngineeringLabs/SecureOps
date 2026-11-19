@@ -19,7 +19,7 @@ pytestmark = pytest.mark.unit
 class TestPasswordHashing:
     def test_hash_password_produces_bcrypt_hash(self):
         hashed = hash_password("MySecureP@ss1")
-        assert hashed.startswith("$2b$") or hashed.startswith("$2a$")
+        assert hashed.startswith(("$2b$", "$2a$"))
 
     def test_hash_password_different_each_call(self):
         h1 = hash_password("SamePassword1!")
@@ -37,6 +37,27 @@ class TestPasswordHashing:
     def test_verify_password_empty_string(self):
         hashed = hash_password("RealP@ssw0rd")
         assert verify_password("", hashed) is False
+
+    def test_hash_rejects_password_over_bcrypt_limit(self):
+        # bcrypt only uses the first 72 bytes; never silently truncate
+        with pytest.raises(ValueError, match="72"):
+            hash_password("A1!" + "a" * 70)
+
+    def test_hash_limit_counts_bytes_not_characters(self):
+        with pytest.raises(ValueError, match="72"):
+            hash_password("é" * 37)  # 37 chars, 74 bytes
+
+    def test_hash_accepts_exactly_72_bytes(self):
+        pw = "A1!" + "a" * 69
+        assert verify_password(pw, hash_password(pw)) is True
+
+    def test_verify_over_limit_returns_false(self):
+        pw = "A1!" + "a" * 69
+        assert verify_password(pw + "extra", hash_password(pw)) is False
+
+    @pytest.mark.parametrize("bad_hash", ["PENDING_REGISTRATION", "", "$2b$garbage"])
+    def test_verify_malformed_hash_returns_false(self, bad_hash):
+        assert verify_password("Whatever1!", bad_hash) is False
 
 
 class TestAccessToken:

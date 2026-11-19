@@ -84,6 +84,7 @@ export default function FrameworkDetailPage() {
   const params = useParams();
   const frameworkId = params.frameworkId as string;
   const [expandedControl, setExpandedControl] = useState<string | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const framework = getFramework(frameworkId);
   const versionId = frameworkId === "fw-soc2" ? "fv-soc2-2017" : "fv-iso27001-2022";
@@ -98,8 +99,6 @@ export default function FrameworkDetailPage() {
       </div>
     );
   }
-
-  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const toggleCategory = (cat: string) => {
     setCollapsedCategories((prev) => {

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.authorization import require_permission
 from app.core.permissions import Action, Resource
 from app.db.tenant_session import get_tenant_db
+from app.models.enums import VendorRiskLevel, VendorStatus
 from app.models.membership import Membership
 from app.models.user import User
 from app.schemas.vendor import (
@@ -38,8 +39,8 @@ async def create_vendor(
 @router.get("", response_model=VendorListResponse)
 async def list_vendors(
     category: str | None = Query(None),
-    vendor_status: str | None = Query(None, alias="status"),
-    risk_level: str | None = Query(None),
+    vendor_status: VendorStatus | None = Query(None, alias="status"),
+    risk_level: VendorRiskLevel | None = Query(None),
     search: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -91,9 +92,7 @@ async def get_vendor(
     svc = VendorService(db)
     vendor = await svc.get_vendor(membership.tenant_id, vendor_id)
     if vendor is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
     return VendorResponse.model_validate(vendor)
 
 
@@ -110,9 +109,7 @@ async def update_vendor(
     svc = VendorService(db)
     vendor = await svc.update_vendor(membership.tenant_id, vendor_id, data)
     if vendor is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
     return VendorResponse.model_validate(vendor)
 
 
@@ -128,9 +125,7 @@ async def delete_vendor(
     svc = VendorService(db)
     deleted = await svc.delete_vendor(membership.tenant_id, vendor_id)
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
 
 
 @router.post("/{vendor_id}/assess", response_model=VendorResponse)
@@ -145,7 +140,5 @@ async def record_vendor_assessment(
     svc = VendorService(db)
     vendor = await svc.record_assessment(membership.tenant_id, vendor_id)
     if vendor is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vendor not found")
     return VendorResponse.model_validate(vendor)

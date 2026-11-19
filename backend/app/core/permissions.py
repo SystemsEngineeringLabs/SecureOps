@@ -40,9 +40,7 @@ ALL_RESOURCES = [
 
 ALL_ACTIONS = [Action.READ, Action.WRITE, Action.DELETE, Action.ADMIN]
 
-_ALL_PERMISSIONS: set[tuple[str, str]] = {
-    (r, a) for r in ALL_RESOURCES for a in ALL_ACTIONS
-}
+_ALL_PERMISSIONS: set[tuple[str, str]] = {(r, a) for r in ALL_RESOURCES for a in ALL_ACTIONS}
 
 _SECURITY_DOMAINS = {
     Resource.COMPLIANCE,
@@ -82,7 +80,11 @@ ROLE_PERMISSIONS: dict[MembershipRole, set[tuple[str, str]]] = {
         for a in ALL_ACTIONS
         if not (r == Resource.ADMIN and a == Action.ADMIN)
     }
-    | {(Resource.ADMIN, Action.READ), (Resource.ADMIN, Action.WRITE), (Resource.ADMIN, Action.DELETE)},
+    | {
+        (Resource.ADMIN, Action.READ),
+        (Resource.ADMIN, Action.WRITE),
+        (Resource.ADMIN, Action.DELETE),
+    },
     MembershipRole.SECURITY_MANAGER: (
         {(r, a) for r in _SECURITY_DOMAINS for a in [Action.READ, Action.WRITE, Action.DELETE]}
         | {(Resource.INTEGRATIONS, Action.READ), (Resource.INTEGRATIONS, Action.WRITE)}
@@ -91,7 +93,16 @@ ROLE_PERMISSIONS: dict[MembershipRole, set[tuple[str, str]]] = {
         | {(Resource.AUDIT, Action.READ)}
     ),
     MembershipRole.ENGINEER: (
-        {(r, Action.READ) for r in [Resource.COMPLIANCE, Resource.RISKS, Resource.EVIDENCE, Resource.POLICIES, Resource.REPORTS]}
+        {
+            (r, Action.READ)
+            for r in [
+                Resource.COMPLIANCE,
+                Resource.RISKS,
+                Resource.EVIDENCE,
+                Resource.POLICIES,
+                Resource.REPORTS,
+            ]
+        }
         | {(r, a) for r in _ENGINEER_WRITE_DOMAINS for a in [Action.READ, Action.WRITE]}
         | {(Resource.INTEGRATIONS, Action.READ)}
     ),

@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,7 +23,10 @@ class RiskService:
         self.db = db
 
     async def create_risk(
-        self, tenant_id: uuid.UUID, data: RiskCreateRequest, created_by: uuid.UUID
+        self,
+        tenant_id: uuid.UUID,
+        data: RiskCreateRequest,
+        created_by: uuid.UUID,  # noqa: ARG002 - TODO: persist risk creator
     ) -> Risk:
         inherent = compute_risk_score(data.likelihood, data.impact)
         risk = Risk(
@@ -77,9 +80,7 @@ class RiskService:
             risk.inherent_score = compute_risk_score(risk.likelihood, risk.impact) or 0.0
 
         if recompute_residual:
-            risk.residual_score = compute_risk_score(
-                risk.residual_likelihood, risk.residual_impact
-            )
+            risk.residual_score = compute_risk_score(risk.residual_likelihood, risk.residual_impact)
 
         await self.db.flush()
         return risk
@@ -188,7 +189,7 @@ class RiskService:
         risk = await self.get_risk(tenant_id, risk_id)
         if risk is None:
             return None
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         risk.last_reviewed_at = now
         risk.next_review_at = now + timedelta(days=REVIEW_INTERVAL_DAYS)
         await self.db.flush()

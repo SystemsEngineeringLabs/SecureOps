@@ -20,10 +20,7 @@ async def list_roles(
             RoleResponse(
                 name=member_role.value,
                 display_name=ROLE_DISPLAY_NAMES.get(member_role, member_role.value),
-                permissions=[
-                    PermissionResponse(resource=r, action=a)
-                    for r, a in sorted(perms)
-                ],
+                permissions=[PermissionResponse(resource=r, action=a) for r, a in sorted(perms)],
             )
         )
     return RoleListResponse(roles=roles)
@@ -40,7 +37,7 @@ async def get_role_permissions(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Role '{role_name}' not found",
-        )
+        ) from None
 
     perms = ROLE_PERMISSIONS.get(member_role, set())
     return [PermissionResponse(resource=r, action=a) for r, a in sorted(perms)]

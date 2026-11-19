@@ -1,6 +1,16 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import audit, auth, compliance, evidence, policies, risks, roles, tenants, vendors
+from app.api.v1.endpoints import (
+    audit,
+    auth,
+    compliance,
+    evidence,
+    policies,
+    risks,
+    roles,
+    tenants,
+    vendors,
+)
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
