@@ -1,12 +1,22 @@
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+
 export default function Home() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading) {
+      router.replace(isAuthenticated ? "/dashboard" : "/login");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-neutral">SecureOps</h1>
-        <p className="mt-2 text-lg text-gray-600">
-          Security Operations &amp; GRC Platform
-        </p>
-      </div>
-    </main>
+    <div className="flex min-h-screen items-center justify-center">
+      <span className="loading loading-spinner loading-lg text-primary" />
+    </div>
   );
 }
