@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.authorization import require_permission
 from app.core.permissions import Action, Resource
 from app.db.tenant_session import get_tenant_db
+from app.models.enums import RiskCategory, RiskImpact, RiskLikelihood, RiskStatus
 from app.models.membership import Membership
 from app.models.user import User
 from app.schemas.risk import (
@@ -14,8 +15,10 @@ from app.schemas.risk import (
     RiskListResponse,
     RiskQueryParams,
     RiskResponse,
+    RiskSortField,
     RiskSummary,
     RiskUpdateRequest,
+    SortOrder,
 )
 from app.services.risk_service import RiskService
 
@@ -38,15 +41,15 @@ async def create_risk(
 
 @router.get("", response_model=RiskListResponse)
 async def list_risks(
-    category: str | None = Query(None),
-    risk_status: str | None = Query(None, alias="status"),
-    likelihood: str | None = Query(None),
-    impact: str | None = Query(None),
+    category: RiskCategory | None = Query(None),
+    risk_status: RiskStatus | None = Query(None, alias="status"),
+    likelihood: RiskLikelihood | None = Query(None),
+    impact: RiskImpact | None = Query(None),
     owner_id: uuid.UUID | None = Query(None),
     min_score: float | None = Query(None),
     search: str | None = Query(None),
-    sort_by: str = Query("inherent_score"),
-    sort_order: str = Query("desc"),
+    sort_by: RiskSortField = Query("inherent_score"),
+    sort_order: SortOrder = Query("desc"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     user_membership: tuple[User, Membership] = Depends(

@@ -6,7 +6,6 @@ from pydantic import ValidationError
 
 from app.schemas.auth import (
     LoginRequest,
-    MeResponse,
     RegisterRequest,
     TokenResponse,
     UserResponse,
@@ -69,8 +68,17 @@ class TestRegisterRequest:
             RegisterRequest(**{**self.VALID, "password": "NoSpecial1Ab"})
 
     def test_password_max_length(self):
-        with pytest.raises(ValidationError, match="at most 128"):
-            RegisterRequest(**{**self.VALID, "password": "A@1a" + "x" * 125})
+        with pytest.raises(ValidationError, match="at most 72 bytes"):
+            RegisterRequest(**{**self.VALID, "password": "A@1a" + "x" * 69})
+
+    def test_password_max_length_counts_utf8_bytes(self):
+        # 40 characters but 76 bytes in UTF-8
+        with pytest.raises(ValidationError, match="at most 72 bytes"):
+            RegisterRequest(**{**self.VALID, "password": "A@1a" + "é" * 36})
+
+    def test_password_exactly_72_bytes_accepted(self):
+        pw = "A@1a" + "x" * 68
+        assert RegisterRequest(**{**self.VALID, "password": pw}).password == pw
 
     def test_empty_tenant_name_rejected(self):
         with pytest.raises(ValidationError, match="Organization name"):

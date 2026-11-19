@@ -1,12 +1,23 @@
 import uuid
-from datetime import date, datetime
-from typing import Any
+from datetime import date
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, String, Text, UniqueConstraint, func, text
+from sqlalchemy import (
+    Boolean,
+    Date,
+    ForeignKey,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_model import Base, TimestampMixin
+
+if TYPE_CHECKING:
+    from app.models.control import Control
 
 
 class Framework(TimestampMixin, Base):
@@ -33,9 +44,7 @@ class Framework(TimestampMixin, Base):
 
 class FrameworkVersion(TimestampMixin, Base):
     __tablename__ = "framework_versions"
-    __table_args__ = (
-        UniqueConstraint("framework_id", "version", name="uq_framework_version"),
-    )
+    __table_args__ = (UniqueConstraint("framework_id", "version", name="uq_framework_version"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -51,9 +60,7 @@ class FrameworkVersion(TimestampMixin, Base):
     version: Mapped[str] = mapped_column(String(50), nullable=False)
     effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_current: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-    metadata_: Mapped[dict[str, Any] | None] = mapped_column(
-        "metadata", JSON, nullable=True
-    )
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
 
     framework: Mapped["Framework"] = relationship(back_populates="versions")
     controls: Mapped[list["Control"]] = relationship(  # noqa: F821

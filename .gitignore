@@ -68,3 +68,6 @@ secrets/
 # Evidence uploads (local dev)
 uploads/
 evidence-store/
+
+# Next.js generated
+next-env.d.ts

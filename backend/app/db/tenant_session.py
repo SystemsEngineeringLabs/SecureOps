@@ -24,6 +24,8 @@ async def get_tenant_db() -> AsyncGenerator[AsyncSession]:
             raise
 
 
-def apply_tenant_filter[T](query: Select[T], model: type, tenant_id: UUID | None = None) -> Select[T]:
+def apply_tenant_filter[T](
+    query: Select[T], model: type, tenant_id: UUID | None = None
+) -> Select[T]:
     tid = tenant_id if tenant_id is not None else get_tenant()
     return query.where(model.tenant_id == tid)  # type: ignore[attr-defined]

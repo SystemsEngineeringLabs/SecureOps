@@ -1,5 +1,5 @@
 import uuid
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -8,9 +8,6 @@ from app.models.enums import (
     ControlStatus,
     EvidenceStatus,
     MembershipRole,
-    PolicyStatus,
-    RiskStatus,
-    VendorStatus,
 )
 
 pytestmark = pytest.mark.security
@@ -145,16 +142,12 @@ class TestGrcPermissionMatrix:
     def test_auditor_has_read_on_all_grc(self):
         perms = ROLE_PERMISSIONS[MembershipRole.AUDITOR]
         for resource in self.GRC_RESOURCES:
-            assert (resource, Action.READ) in perms, (
-                f"Auditor missing READ on {resource}"
-            )
+            assert (resource, Action.READ) in perms, f"Auditor missing READ on {resource}"
 
     def test_engineer_has_read_on_grc(self):
         perms = ROLE_PERMISSIONS[MembershipRole.ENGINEER]
         for resource in self.GRC_RESOURCES:
-            assert (resource, Action.READ) in perms, (
-                f"Engineer missing READ on {resource}"
-            )
+            assert (resource, Action.READ) in perms, f"Engineer missing READ on {resource}"
 
     def test_security_manager_has_write_on_grc(self):
         perms = ROLE_PERMISSIONS[MembershipRole.SECURITY_MANAGER]
@@ -182,6 +175,7 @@ class TestEvidenceSecurityConstraints:
 
     def test_evidence_hash_is_64_chars(self):
         import hashlib
+
         h = hashlib.sha256(b"test evidence content").hexdigest()
         assert len(h) == 64
 

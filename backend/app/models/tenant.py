@@ -1,12 +1,15 @@
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime, String, func, text
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_model import Base
+
+if TYPE_CHECKING:
+    from app.models.membership import Membership
 
 
 class Tenant(Base):

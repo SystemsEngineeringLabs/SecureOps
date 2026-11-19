@@ -4,36 +4,46 @@ Revision ID: 001
 Revises: None
 Create Date: 2024-11-19
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects.postgresql import JSON, UUID
 
+from alembic import op
+
 revision: str = "001"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
     # --- tenants ---
     op.create_table(
         "tenants",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
         sa.Column("name", sa.String(255), unique=True, nullable=False),
         sa.Column("slug", sa.String(100), unique=True, nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("settings", JSON, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True
+        ),
     )
     op.create_index("ix_tenants_slug", "tenants", ["slug"])
 
     # --- users ---
     op.create_table(
         "users",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
         sa.Column("email", sa.String(320), unique=True, nullable=False),
         sa.Column("hashed_password", sa.String(128), nullable=False),
         sa.Column("full_name", sa.String(255), nullable=False),
@@ -42,14 +52,22 @@ def upgrade() -> None:
         sa.Column("mfa_enabled", sa.Boolean(), nullable=False, server_default=sa.text("false")),
         sa.Column("mfa_secret", sa.String(255), nullable=True),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True
+        ),
     )
     op.create_index("ix_users_email", "users", ["email"])
 
     # --- membership_role enum ---
     membership_role = sa.Enum(
-        "super_admin", "org_admin", "security_manager", "engineer", "auditor",
+        "super_admin",
+        "org_admin",
+        "security_manager",
+        "engineer",
+        "auditor",
         name="membership_role",
     )
     membership_role.create(op.get_bind(), checkfirst=True)
@@ -57,15 +75,38 @@ def upgrade() -> None:
     # --- memberships ---
     op.create_table(
         "memberships",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("tenant_id", UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "tenant_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("role", membership_role, nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("invited_by", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
-        sa.Column("joined_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True),
+        sa.Column(
+            "invited_by",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
+        sa.Column(
+            "joined_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=True
+        ),
         sa.UniqueConstraint("tenant_id", "user_id", name="uq_membership_tenant_user"),
     )
     op.create_index("ix_memberships_tenant_id", "memberships", ["tenant_id"])
@@ -74,18 +115,24 @@ def upgrade() -> None:
     # --- roles ---
     op.create_table(
         "roles",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
         sa.Column("name", sa.String(50), unique=True, nullable=False),
         sa.Column("display_name", sa.String(100), nullable=False),
         sa.Column("description", sa.String(500), nullable=True),
         sa.Column("is_system", sa.Boolean(), nullable=False, server_default=sa.text("true")),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # --- permissions ---
     op.create_table(
         "permissions",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
         sa.Column("resource", sa.String(100), nullable=False),
         sa.Column("action", sa.String(50), nullable=False),
         sa.Column("description", sa.String(500), nullable=True),
@@ -95,23 +142,47 @@ def upgrade() -> None:
     # --- role_permissions ---
     op.create_table(
         "role_permissions",
-        sa.Column("role_id", UUID(as_uuid=True), sa.ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("permission_id", UUID(as_uuid=True), sa.ForeignKey("permissions.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "role_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("roles.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
+        sa.Column(
+            "permission_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("permissions.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
     )
 
     # --- audit_events ---
     op.create_table(
         "audit_events",
-        sa.Column("id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True),
-        sa.Column("tenant_id", UUID(as_uuid=True), sa.ForeignKey("tenants.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("user_id", UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
+        sa.Column(
+            "id", UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), primary_key=True
+        ),
+        sa.Column(
+            "tenant_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("tenants.id", ondelete="CASCADE"),
+            nullable=True,
+        ),
+        sa.Column(
+            "user_id",
+            UUID(as_uuid=True),
+            sa.ForeignKey("users.id", ondelete="SET NULL"),
+            nullable=True,
+        ),
         sa.Column("action", sa.String(100), nullable=False),
         sa.Column("resource_type", sa.String(100), nullable=True),
         sa.Column("resource_id", UUID(as_uuid=True), nullable=True),
         sa.Column("details", JSON, nullable=True),
         sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("user_agent", sa.String(500), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
     op.create_index("ix_audit_events_tenant_id", "audit_events", ["tenant_id"])
     op.create_index("ix_audit_events_tenant_created", "audit_events", ["tenant_id", "created_at"])

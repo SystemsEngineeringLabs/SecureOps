@@ -1,8 +1,6 @@
 import hashlib
 import uuid
-from datetime import datetime, timezone
-from pathlib import PurePosixPath
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -11,10 +9,9 @@ from app.models.enums import EvidenceCollectionMethod, EvidenceStatus
 from app.schemas.evidence import (
     EvidenceApproveRequest,
     EvidenceQueryParams,
-    EvidenceResponse,
     EvidenceSummary,
-    EvidenceUploadRequest,
     EvidenceUpdateRequest,
+    EvidenceUploadRequest,
 )
 from app.services.evidence_service import (
     ALLOWED_CONTENT_TYPES,

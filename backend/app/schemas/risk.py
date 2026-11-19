@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -94,6 +95,22 @@ class RiskHeatmapResponse(BaseModel):
     cells: list[RiskHeatmapCell]
 
 
+RiskSortField = Literal[
+    "inherent_score",
+    "residual_score",
+    "title",
+    "category",
+    "status",
+    "likelihood",
+    "impact",
+    "due_date",
+    "next_review_at",
+    "created_at",
+    "updated_at",
+]
+SortOrder = Literal["asc", "desc"]
+
+
 class RiskQueryParams(BaseModel):
     category: RiskCategory | None = None
     status: RiskStatus | None = None
@@ -102,7 +119,7 @@ class RiskQueryParams(BaseModel):
     owner_id: uuid.UUID | None = None
     min_score: float | None = None
     search: str | None = None
-    sort_by: str = "inherent_score"
-    sort_order: str = "desc"
+    sort_by: RiskSortField = "inherent_score"
+    sort_order: SortOrder = "desc"
     limit: int = Field(default=50, ge=1, le=200)
     offset: int = Field(default=0, ge=0)

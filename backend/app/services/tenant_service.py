@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from typing import Any
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -21,9 +22,7 @@ async def get_tenant(db: AsyncSession, tenant_id: UUID) -> Tenant:
     return tenant
 
 
-async def update_tenant(
-    db: AsyncSession, tenant_id: UUID, data: TenantUpdateRequest
-) -> Tenant:
+async def update_tenant(db: AsyncSession, tenant_id: UUID, data: TenantUpdateRequest) -> Tenant:
     tenant = await get_tenant(db, tenant_id)
     update_data = data.model_dump(exclude_unset=True)
 
@@ -44,7 +43,7 @@ async def update_tenant(
     return tenant
 
 
-async def list_members(db: AsyncSession, tenant_id: UUID) -> list[dict]:
+async def list_members(db: AsyncSession, tenant_id: UUID) -> list[dict[str, Any]]:
     result = await db.execute(
         select(Membership, User)
         .join(User, Membership.user_id == User.id)
@@ -89,7 +88,12 @@ async def invite_member(
     user = user_result.scalar_one_or_none()
 
     if user is None:
-        user = User(email=email, hashed_password="PENDING_REGISTRATION", full_name="", is_active=False)
+        user = User(
+            email=email,
+            hashed_password="PENDING_REGISTRATION",  # noqa: S106  # nosec B106 - placeholder, never verifies
+            full_name="",
+            is_active=False,
+        )
         db.add(user)
         await db.flush()
 
@@ -115,9 +119,7 @@ async def create_tenant(db: AsyncSession, name: str) -> Tenant:
     return tenant
 
 
-async def generate_tenant_slug(
-    db: AsyncSession, name: str, exclude_id: UUID | None = None
-) -> str:
+async def generate_tenant_slug(db: AsyncSession, name: str, exclude_id: UUID | None = None) -> str:
     slug = unicodedata.normalize("NFKD", name.lower())
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[-\s]+", "-", slug).strip("-")

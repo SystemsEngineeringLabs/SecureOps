@@ -1,20 +1,20 @@
 import logging
 import re
 import sys
+from collections.abc import MutableMapping
+from typing import Any
 
 import structlog
 
 from app.core.config import settings
 from app.core.tenant_context import get_tenant_or_none
 
-_SENSITIVE_PATTERN = re.compile(
-    r"(password|token|secret|credential|authorization)", re.IGNORECASE
-)
+_SENSITIVE_PATTERN = re.compile(r"(password|token|secret|credential|authorization)", re.IGNORECASE)
 
 
 def _redact_sensitive(
-    _logger: object, _method: str, event_dict: dict
-) -> dict:
+    _logger: Any, _method: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     for key in list(event_dict.keys()):
         if isinstance(key, str) and _SENSITIVE_PATTERN.search(key):
             event_dict[key] = "[REDACTED]"
@@ -22,8 +22,8 @@ def _redact_sensitive(
 
 
 def _add_tenant_context(
-    _logger: object, _method: str, event_dict: dict
-) -> dict:
+    _logger: Any, _method: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     tenant_id = get_tenant_or_none()
     if tenant_id is not None:
         event_dict.setdefault("tenant_id", str(tenant_id))
@@ -78,4 +78,5 @@ def setup_logging() -> None:
 
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
-    return structlog.get_logger(name)
+    logger: structlog.stdlib.BoundLogger = structlog.get_logger(name)
+    return logger

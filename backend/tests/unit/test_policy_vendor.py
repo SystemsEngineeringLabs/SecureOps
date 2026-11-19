@@ -1,5 +1,5 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import date
 
 import pytest
 
@@ -11,13 +11,11 @@ from app.models.enums import (
 from app.schemas.policy import (
     PolicyCreateRequest,
     PolicyQueryParams,
-    PolicyResponse,
     PolicyUpdateRequest,
 )
 from app.schemas.vendor import (
     VendorCreateRequest,
     VendorQueryParams,
-    VendorResponse,
     VendorSummary,
     VendorUpdateRequest,
 )
@@ -189,5 +187,10 @@ class TestVendorEnums:
         assert {s.value for s in VendorStatus} == expected
 
     def test_risk_level_severity_order(self):
-        levels = [VendorRiskLevel.LOW, VendorRiskLevel.MEDIUM, VendorRiskLevel.HIGH, VendorRiskLevel.CRITICAL]
+        levels = [
+            VendorRiskLevel.LOW,
+            VendorRiskLevel.MEDIUM,
+            VendorRiskLevel.HIGH,
+            VendorRiskLevel.CRITICAL,
+        ]
         assert len(levels) == len(VendorRiskLevel)

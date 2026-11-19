@@ -26,7 +26,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
     if payload.get("type") != "access":
         raise HTTPException(
@@ -47,7 +47,7 @@ async def get_current_user(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
-        )
+        ) from None
 
     user = await auth_service.get_user_by_id(db, user_id)
     if user is None:
@@ -81,7 +81,7 @@ async def get_current_tenant_membership(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
 
     if payload.get("type") != "access":
         raise HTTPException(
@@ -104,7 +104,7 @@ async def get_current_tenant_membership(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
-        )
+        ) from None
 
     user = await auth_service.get_user_by_id(db, user_id)
     if user is None or not user.is_active:

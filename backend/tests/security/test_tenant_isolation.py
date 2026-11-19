@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from app.core.permissions import ROLE_PERMISSIONS, Resource, Action
+from app.core.permissions import ROLE_PERMISSIONS, Action, Resource
 from app.core.tenant_context import (
     TenantNotSetError,
     clear_tenant,
@@ -51,7 +51,7 @@ class TestTenantContextIsolation:
 class TestCrossTenantPermissions:
     def test_no_role_grants_cross_tenant_access(self):
         """No permission tuple encodes a different tenant — permissions are resource/action only."""
-        for role, perms in ROLE_PERMISSIONS.items():
+        for _role, perms in ROLE_PERMISSIONS.items():
             for resource, action in perms:
                 assert isinstance(resource, str)
                 assert isinstance(action, str)

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from uuid import UUID
 
 from sqlalchemy import func, select
@@ -14,9 +14,7 @@ class PolicyService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def create_policy(
-        self, tenant_id: UUID, data: PolicyCreateRequest
-    ) -> Policy:
+    async def create_policy(self, tenant_id: UUID, data: PolicyCreateRequest) -> Policy:
         policy = Policy(
             tenant_id=tenant_id,
             title=data.title,
@@ -69,14 +67,12 @@ class PolicyService:
 
         policy.status = PolicyStatus.PUBLISHED
         policy.approved_by = approved_by
-        policy.approved_at = datetime.now(timezone.utc)
+        policy.approved_at = datetime.now(UTC)
         await self.db.flush()
         await self.db.refresh(policy)
         return policy
 
-    async def archive_policy(
-        self, tenant_id: UUID, policy_id: UUID
-    ) -> Policy | None:
+    async def archive_policy(self, tenant_id: UUID, policy_id: UUID) -> Policy | None:
         policy = await self.get_policy(tenant_id, policy_id)
         if policy is None:
             return None
@@ -100,9 +96,7 @@ class PolicyService:
             pattern = f"%{params.search}%"
             base = base.where(Policy.title.ilike(pattern))
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         query = base.order_by(Policy.created_at.desc()).offset(params.offset).limit(params.limit)

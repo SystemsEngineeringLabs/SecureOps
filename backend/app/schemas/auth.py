@@ -3,6 +3,8 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
+from app.core.security import BCRYPT_MAX_PASSWORD_BYTES
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -21,8 +23,8 @@ class RegisterRequest(BaseModel):
     def validate_password(cls, v: str) -> str:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters")
-        if len(v) > 128:
-            raise ValueError("Password must be at most 128 characters")
+        if len(v.encode("utf-8")) > BCRYPT_MAX_PASSWORD_BYTES:
+            raise ValueError(f"Password must be at most {BCRYPT_MAX_PASSWORD_BYTES} bytes")
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
         if not re.search(r"[a-z]", v):
@@ -53,7 +55,7 @@ class RegisterRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
-    token_type: str = "bearer"
+    token_type: str = "bearer"  # noqa: S105 - OAuth2 token type, not a secret
 
 
 class RefreshRequest(BaseModel):

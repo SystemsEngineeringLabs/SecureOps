@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.permissions import Action, Resource, ROLE_PERMISSIONS
+from app.core.permissions import ROLE_PERMISSIONS, Action, Resource
 from app.models.enums import MembershipRole
 from app.services.rbac_service import check_permission, get_role_permissions
 
@@ -10,7 +10,9 @@ pytestmark = pytest.mark.unit
 class TestCheckPermission:
     def test_super_admin_can_do_anything(self):
         assert check_permission(MembershipRole.SUPER_ADMIN, Resource.ADMIN, Action.ADMIN) is True
-        assert check_permission(MembershipRole.SUPER_ADMIN, Resource.COMPLIANCE, Action.DELETE) is True
+        assert (
+            check_permission(MembershipRole.SUPER_ADMIN, Resource.COMPLIANCE, Action.DELETE) is True
+        )
 
     def test_org_admin_can_read_compliance(self):
         assert check_permission(MembershipRole.ORG_ADMIN, Resource.COMPLIANCE, Action.READ) is True
@@ -19,13 +21,19 @@ class TestCheckPermission:
         assert check_permission(MembershipRole.ORG_ADMIN, Resource.ADMIN, Action.ADMIN) is False
 
     def test_engineer_can_write_vulnerabilities(self):
-        assert check_permission(MembershipRole.ENGINEER, Resource.VULNERABILITIES, Action.WRITE) is True
+        assert (
+            check_permission(MembershipRole.ENGINEER, Resource.VULNERABILITIES, Action.WRITE)
+            is True
+        )
 
     def test_engineer_cannot_write_compliance(self):
         assert check_permission(MembershipRole.ENGINEER, Resource.COMPLIANCE, Action.WRITE) is False
 
     def test_engineer_cannot_delete_vulnerabilities(self):
-        assert check_permission(MembershipRole.ENGINEER, Resource.VULNERABILITIES, Action.DELETE) is False
+        assert (
+            check_permission(MembershipRole.ENGINEER, Resource.VULNERABILITIES, Action.DELETE)
+            is False
+        )
 
     def test_auditor_can_read_compliance(self):
         assert check_permission(MembershipRole.AUDITOR, Resource.COMPLIANCE, Action.READ) is True
@@ -41,16 +49,23 @@ class TestCheckPermission:
             assert check_permission(MembershipRole.AUDITOR, resource, Action.ADMIN) is False
 
     def test_security_manager_can_write_risks(self):
-        assert check_permission(MembershipRole.SECURITY_MANAGER, Resource.RISKS, Action.WRITE) is True
+        assert (
+            check_permission(MembershipRole.SECURITY_MANAGER, Resource.RISKS, Action.WRITE) is True
+        )
 
     def test_security_manager_can_read_audit(self):
-        assert check_permission(MembershipRole.SECURITY_MANAGER, Resource.AUDIT, Action.READ) is True
+        assert (
+            check_permission(MembershipRole.SECURITY_MANAGER, Resource.AUDIT, Action.READ) is True
+        )
 
     def test_invalid_resource_returns_false(self):
         assert check_permission(MembershipRole.SUPER_ADMIN, "nonexistent", Action.READ) is False
 
     def test_invalid_action_returns_false(self):
-        assert check_permission(MembershipRole.SUPER_ADMIN, Resource.COMPLIANCE, "nonexistent") is False
+        assert (
+            check_permission(MembershipRole.SUPER_ADMIN, Resource.COMPLIANCE, "nonexistent")
+            is False
+        )
 
 
 class TestGetRolePermissions:
@@ -71,5 +86,5 @@ class TestGetRolePermissions:
 
     def test_auditor_permissions_all_read(self):
         perms = get_role_permissions(MembershipRole.AUDITOR)
-        for resource, action in perms:
+        for _resource, action in perms:
             assert action == Action.READ

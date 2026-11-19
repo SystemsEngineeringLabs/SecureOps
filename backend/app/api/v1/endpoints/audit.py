@@ -19,7 +19,7 @@ router = APIRouter(prefix="/audit", tags=["audit"])
 @router.get("", response_model=AuditListResponse)
 async def query_audit_events(
     db: AsyncSession = Depends(get_tenant_db),
-    auth: tuple[User, Membership] = Depends(require_permission(Resource.AUDIT, Action.READ)),
+    _auth: tuple[User, Membership] = Depends(require_permission(Resource.AUDIT, Action.READ)),
     action: str | None = Query(None),
     resource_type: str | None = Query(None),
     user_id: UUID | None = Query(None),

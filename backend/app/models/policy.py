@@ -26,9 +26,7 @@ class Policy(TenantScopedBase, Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     effective_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     review_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     owner_id: Mapped[uuid.UUID | None] = mapped_column(

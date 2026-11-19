@@ -34,9 +34,7 @@ class Role(Base):
 
 class Permission(Base):
     __tablename__ = "permissions"
-    __table_args__ = (
-        UniqueConstraint("resource", "action", name="uq_permission_resource_action"),
-    )
+    __table_args__ = (UniqueConstraint("resource", "action", name="uq_permission_resource_action"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

@@ -1,7 +1,16 @@
 import uuid
 from datetime import datetime
+from typing import Any
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, func, text
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSON, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -44,12 +53,8 @@ class Evidence(TenantScopedBase, Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    approved_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     collection_method: Mapped[EvidenceCollectionMethod] = mapped_column(
         Enum(
@@ -63,9 +68,7 @@ class Evidence(TenantScopedBase, Base):
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
     tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
 
-    previous_version: Mapped["Evidence | None"] = relationship(
-        remote_side="Evidence.id"
-    )
+    previous_version: Mapped["Evidence | None"] = relationship(remote_side="Evidence.id")
     control_links: Mapped[list["ControlEvidence"]] = relationship(
         back_populates="evidence", cascade="all, delete-orphan"
     )
@@ -118,15 +121,11 @@ class EvidenceCollectionRun(TenantScopedBase, Base):
         default=CollectionRunStatus.PENDING,
         nullable=False,
     )
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    completed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     evidence_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    metadata_: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
+    metadata_: Mapped[dict[str, Any] | None] = mapped_column("metadata", JSON, nullable=True)
 
     def __repr__(self) -> str:
         return f"<EvidenceCollectionRun {self.source} status={self.status}>"

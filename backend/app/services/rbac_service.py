@@ -18,9 +18,7 @@ def get_role_permissions(role: MembershipRole) -> list[tuple[str, str]]:
 async def seed_roles_and_permissions(db: AsyncSession) -> None:
     """Seed the database with system roles and permissions. Idempotent."""
     existing_perms_result = await db.execute(select(Permission))
-    existing_perms = {
-        (p.resource, p.action): p for p in existing_perms_result.scalars().all()
-    }
+    existing_perms = {(p.resource, p.action): p for p in existing_perms_result.scalars().all()}
 
     perm_objects: dict[tuple[str, str], Permission] = {}
     for resource in ALL_RESOURCES:
@@ -66,8 +64,8 @@ async def seed_roles_and_permissions(db: AsyncSession) -> None:
 
         role_perms = ROLE_PERMISSIONS.get(member_role, set())
         for perm_key in role_perms:
-            perm = perm_objects.get(perm_key)
-            if perm and perm.id not in existing_rp_perm_ids:
-                db.add(RolePermission(role_id=role.id, permission_id=perm.id))
+            granted = perm_objects.get(perm_key)
+            if granted and granted.id not in existing_rp_perm_ids:
+                db.add(RolePermission(role_id=role.id, permission_id=granted.id))
 
     await db.commit()

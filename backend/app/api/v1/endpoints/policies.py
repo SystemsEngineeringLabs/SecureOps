@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.authorization import require_permission
 from app.core.permissions import Action, Resource
 from app.db.tenant_session import get_tenant_db
+from app.models.enums import PolicyStatus
 from app.models.membership import Membership
 from app.models.user import User
 from app.schemas.policy import (
@@ -37,7 +38,7 @@ async def create_policy(
 @router.get("", response_model=PolicyListResponse)
 async def list_policies(
     category: str | None = Query(None),
-    policy_status: str | None = Query(None, alias="status"),
+    policy_status: PolicyStatus | None = Query(None, alias="status"),
     search: str | None = Query(None),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -76,9 +77,7 @@ async def get_policy(
     svc = PolicyService(db)
     policy = await svc.get_policy(membership.tenant_id, policy_id)
     if policy is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
     return PolicyResponse.model_validate(policy)
 
 
@@ -95,9 +94,7 @@ async def update_policy(
     svc = PolicyService(db)
     policy = await svc.update_policy(membership.tenant_id, policy_id, data)
     if policy is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
     return PolicyResponse.model_validate(policy)
 
 
@@ -113,9 +110,7 @@ async def publish_policy(
     svc = PolicyService(db)
     policy = await svc.publish_policy(membership.tenant_id, policy_id, user.id)
     if policy is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
     return PolicyResponse.model_validate(policy)
 
 
@@ -131,9 +126,7 @@ async def archive_policy(
     svc = PolicyService(db)
     policy = await svc.archive_policy(membership.tenant_id, policy_id)
     if policy is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")
     return PolicyResponse.model_validate(policy)
 
 
@@ -149,6 +142,4 @@ async def delete_policy(
     svc = PolicyService(db)
     deleted = await svc.delete_policy(membership.tenant_id, policy_id)
     if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Policy not found")

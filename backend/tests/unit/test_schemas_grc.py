@@ -1,12 +1,9 @@
 import uuid
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 
 from app.models.enums import (
-    ControlEffectiveness,
-    ControlMappingType,
-    ControlStatus,
     EvidenceCollectionMethod,
     EvidenceStatus,
     PolicyStatus,
@@ -19,24 +16,12 @@ from app.models.enums import (
     VendorStatus,
 )
 from app.schemas.evidence import EvidenceResponse
-from app.schemas.framework import (
-    ControlDetailResponse,
-    ControlMappingResponse,
-    ControlResponse,
-    ControlStatusSummary,
-    FrameworkDetailResponse,
-    FrameworkResponse,
-    FrameworkVersionResponse,
-    GapAssessmentResponse,
-    TenantControlStatusResponse,
-)
 from app.schemas.policy import PolicyResponse
 from app.schemas.risk import (
     RiskHeatmapCell,
     RiskHeatmapResponse,
     RiskListResponse,
     RiskResponse,
-    RiskSummary,
 )
 from app.schemas.vendor import VendorResponse
 
@@ -47,7 +32,7 @@ class TestRiskResponseSerialization:
     def test_full_response(self):
         rid = uuid.uuid4()
         oid = uuid.uuid4()
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = RiskResponse(
             id=rid,
             title="Data breach risk",
@@ -77,7 +62,7 @@ class TestRiskResponseSerialization:
         assert data["status"] == RiskStatus.MITIGATING
 
     def test_minimal_response(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = RiskResponse(
             id=uuid.uuid4(),
             title="Simple risk",
@@ -126,7 +111,7 @@ class TestRiskResponseSerialization:
 
 class TestEvidenceResponseSerialization:
     def test_full_response(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = EvidenceResponse(
             id=uuid.uuid4(),
             title="SOC 2 Report",
@@ -152,7 +137,7 @@ class TestEvidenceResponseSerialization:
         assert data["version"] == 1
 
     def test_pending_response(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = EvidenceResponse(
             id=uuid.uuid4(),
             title="Pending doc",
@@ -180,7 +165,7 @@ class TestEvidenceResponseSerialization:
 
 class TestPolicyResponseSerialization:
     def test_draft_policy(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = PolicyResponse(
             id=uuid.uuid4(),
             title="Password Policy",
@@ -202,7 +187,7 @@ class TestPolicyResponseSerialization:
         assert data["version"] == 1
 
     def test_published_policy(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         approver = uuid.uuid4()
         resp = PolicyResponse(
             id=uuid.uuid4(),
@@ -227,7 +212,7 @@ class TestPolicyResponseSerialization:
 
 class TestVendorResponseSerialization:
     def test_active_vendor(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = VendorResponse(
             id=uuid.uuid4(),
             name="Datadog",
@@ -252,7 +237,7 @@ class TestVendorResponseSerialization:
         assert data["status"] == VendorStatus.ACTIVE
 
     def test_minimal_vendor(self):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         resp = VendorResponse(
             id=uuid.uuid4(),
             name="Small Vendor",
@@ -279,7 +264,14 @@ class TestVendorResponseSerialization:
 
 class TestAllGrcEnumsCovered:
     def test_risk_category_values(self):
-        expected = {"operational", "technical", "compliance", "strategic", "financial", "reputational"}
+        expected = {
+            "operational",
+            "technical",
+            "compliance",
+            "strategic",
+            "financial",
+            "reputational",
+        }
         assert {c.value for c in RiskCategory} == expected
 
     def test_risk_treatment_values(self):
@@ -292,7 +284,7 @@ class TestAllGrcEnumsCovered:
 
     def test_risk_likelihood_values(self):
         expected = {"very_low", "low", "medium", "high", "very_high"}
-        assert {l.value for l in RiskLikelihood} == expected
+        assert {lk.value for lk in RiskLikelihood} == expected
 
     def test_risk_impact_values(self):
         expected = {"very_low", "low", "medium", "high", "very_high"}

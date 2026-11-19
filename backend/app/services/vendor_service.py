@@ -1,22 +1,25 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy import case, func, select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.tenant_session import apply_tenant_filter
-from app.models.enums import VendorRiskLevel, VendorStatus
+from app.models.enums import VendorStatus
 from app.models.vendor import Vendor
-from app.schemas.vendor import VendorCreateRequest, VendorQueryParams, VendorSummary, VendorUpdateRequest
+from app.schemas.vendor import (
+    VendorCreateRequest,
+    VendorQueryParams,
+    VendorSummary,
+    VendorUpdateRequest,
+)
 
 
 class VendorService:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def create_vendor(
-        self, tenant_id: UUID, data: VendorCreateRequest
-    ) -> Vendor:
+    async def create_vendor(self, tenant_id: UUID, data: VendorCreateRequest) -> Vendor:
         vendor = Vendor(
             tenant_id=tenant_id,
             name=data.name,
@@ -81,9 +84,7 @@ class VendorService:
             pattern = f"%{params.search}%"
             base = base.where(Vendor.name.ilike(pattern))
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         query = base.order_by(Vendor.name.asc()).offset(params.offset).limit(params.limit)
@@ -95,9 +96,7 @@ class VendorService:
         base = select(Vendor)
         base = apply_tenant_filter(base, Vendor, tenant_id)
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         # Status breakdown
@@ -117,17 +116,17 @@ class VendorService:
             .group_by(Vendor.risk_level)
         )
         risk_result = await self.db.execute(risk_query)
-        by_risk_level = {row[0].value: row[1] for row in risk_result.all()}
+        by_risk_level = {row[0].value: row[1] for row in risk_result.all() if row[0] is not None}
 
         # Contracts expiring within 90 days
-        threshold = date.today() + timedelta(days=90)
+        threshold = datetime.now(UTC).date() + timedelta(days=90)
         expiring_query = (
             select(func.count())
             .select_from(Vendor)
             .where(Vendor.tenant_id == tenant_id)
             .where(Vendor.contract_end.isnot(None))
             .where(Vendor.contract_end <= threshold)
-            .where(Vendor.contract_end >= date.today())
+            .where(Vendor.contract_end >= datetime.now(UTC).date())
             .where(Vendor.status == VendorStatus.ACTIVE)
         )
         expiring_result = await self.db.execute(expiring_query)
@@ -140,14 +139,12 @@ class VendorService:
             contracts_expiring_soon=contracts_expiring_soon,
         )
 
-    async def record_assessment(
-        self, tenant_id: UUID, vendor_id: UUID
-    ) -> Vendor | None:
+    async def record_assessment(self, tenant_id: UUID, vendor_id: UUID) -> Vendor | None:
         vendor = await self.get_vendor(tenant_id, vendor_id)
         if vendor is None:
             return None
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         vendor.last_assessment_at = now
         vendor.next_assessment_at = now + timedelta(days=365)
         await self.db.flush()

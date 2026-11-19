@@ -1,12 +1,12 @@
 import pytest
 
 from app.core.permissions import (
+    _ALL_PERMISSIONS,
     ALL_ACTIONS,
     ALL_RESOURCES,
+    ROLE_PERMISSIONS,
     Action,
     Resource,
-    ROLE_PERMISSIONS,
-    _ALL_PERMISSIONS,
 )
 from app.models.enums import MembershipRole
 
@@ -161,12 +161,12 @@ class TestAuditor:
 class TestPermissionIntegrity:
     def test_all_permissions_use_defined_resources(self):
         for role, perms in ROLE_PERMISSIONS.items():
-            for resource, action in perms:
+            for resource, _action in perms:
                 assert resource in ALL_RESOURCES, f"{role}: unknown resource '{resource}'"
 
     def test_all_permissions_use_defined_actions(self):
         for role, perms in ROLE_PERMISSIONS.items():
-            for resource, action in perms:
+            for _resource, action in perms:
                 assert action in ALL_ACTIONS, f"{role}: unknown action '{action}'"
 
     def test_every_role_is_subset_of_super_admin(self):

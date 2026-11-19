@@ -1,6 +1,5 @@
 import uuid
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -17,7 +16,7 @@ class TestAuditLog:
 
     @pytest.mark.asyncio
     async def test_log_creates_event(self, service, mock_db, tenant_id, user_id):
-        event = await service.log(
+        await service.log(
             "user.login",
             tenant_id=tenant_id,
             user_id=user_id,
@@ -34,7 +33,7 @@ class TestAuditLog:
 
     @pytest.mark.asyncio
     async def test_log_nullable_fields(self, service, mock_db):
-        event = await service.log("system.startup")
+        await service.log("system.startup")
         added_obj = mock_db.add.call_args[0][0]
         assert added_obj.tenant_id is None
         assert added_obj.user_id is None

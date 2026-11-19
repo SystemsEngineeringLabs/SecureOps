@@ -1,5 +1,6 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,8 +11,6 @@ from app.models.enums import ControlStatus
 from app.models.framework import Framework, FrameworkVersion
 from app.schemas.framework import (
     ControlDetailResponse,
-    ControlMappingResponse,
-    ControlResponse,
     ControlStatusSummary,
     GapAssessmentResponse,
     TenantControlStatusResponse,
@@ -100,7 +99,7 @@ class ComplianceService:
             .order_by(Control.category)
         )
         result = await self.db.execute(stmt)
-        return list(result.scalars().all())
+        return [c for c in result.scalars().all() if c is not None]
 
     async def get_control_count(self, framework_version_id: uuid.UUID) -> int:
         stmt = (
@@ -157,7 +156,7 @@ class ComplianceService:
                 existing.owner_id = data.owner_id
             if data.notes is not None:
                 existing.notes = data.notes
-            existing.last_assessed_at = datetime.now(timezone.utc)
+            existing.last_assessed_at = datetime.now(UTC)
             await self.db.flush()
             return existing
 
@@ -168,7 +167,7 @@ class ComplianceService:
             effectiveness=data.effectiveness,
             owner_id=data.owner_id,
             notes=data.notes,
-            last_assessed_at=datetime.now(timezone.utc),
+            last_assessed_at=datetime.now(UTC),
         )
         self.db.add(new_status)
         await self.db.flush()
@@ -230,7 +229,9 @@ class ComplianceService:
                         category=control.category,
                         parent_id=control.parent_id,
                         sort_order=control.sort_order,
-                        tenant_status=TenantControlStatusResponse.model_validate(cs) if cs else None,
+                        tenant_status=TenantControlStatusResponse.model_validate(cs)
+                        if cs
+                        else None,
                         mappings=[],
                     )
                 )
@@ -244,7 +245,7 @@ class ComplianceService:
     async def bulk_update_control_statuses(
         self,
         tenant_id: uuid.UUID,
-        updates: list[dict],
+        updates: list[dict[str, Any]],
     ) -> int:
         count = 0
         for update in updates:

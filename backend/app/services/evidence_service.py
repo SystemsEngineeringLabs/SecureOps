@@ -1,5 +1,5 @@
 import hashlib
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import PurePosixPath
 from uuid import UUID
 
@@ -37,8 +37,20 @@ ALLOWED_CONTENT_TYPES = {
 }
 
 BLOCKED_EXTENSIONS = {
-    ".exe", ".bat", ".cmd", ".sh", ".ps1", ".dll", ".so",
-    ".msi", ".com", ".scr", ".vbs", ".js", ".wsf", ".pif",
+    ".exe",
+    ".bat",
+    ".cmd",
+    ".sh",
+    ".ps1",
+    ".dll",
+    ".so",
+    ".msi",
+    ".com",
+    ".scr",
+    ".vbs",
+    ".js",
+    ".wsf",
+    ".pif",
 }
 
 
@@ -127,9 +139,7 @@ class EvidenceService:
             base = base.where(Evidence.status == params.status)
         if params.search is not None:
             pattern = f"%{params.search}%"
-            base = base.where(
-                Evidence.title.ilike(pattern) | Evidence.file_name.ilike(pattern)
-            )
+            base = base.where(Evidence.title.ilike(pattern) | Evidence.file_name.ilike(pattern))
         if params.uploaded_by is not None:
             base = base.where(Evidence.uploaded_by == params.uploaded_by)
         if params.since is not None:
@@ -137,24 +147,17 @@ class EvidenceService:
         if params.until is not None:
             base = base.where(Evidence.created_at <= params.until)
         if params.control_id is not None:
-            sub = (
-                select(ControlEvidence.evidence_id)
-                .where(
-                    ControlEvidence.control_id == params.control_id,
-                    ControlEvidence.tenant_id == tenant_id,
-                )
+            sub = select(ControlEvidence.evidence_id).where(
+                ControlEvidence.control_id == params.control_id,
+                ControlEvidence.tenant_id == tenant_id,
             )
             base = base.where(Evidence.id.in_(sub))
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         rows = await self.db.execute(
-            base.order_by(Evidence.created_at.desc())
-            .limit(params.limit)
-            .offset(params.offset)
+            base.order_by(Evidence.created_at.desc()).limit(params.limit).offset(params.offset)
         )
         items = list(rows.scalars().all())
         return items, total
@@ -187,13 +190,11 @@ class EvidenceService:
             evidence.status = EvidenceStatus.REJECTED
 
         evidence.approved_by = approved_by
-        evidence.approved_at = datetime.now(timezone.utc)
+        evidence.approved_at = datetime.now(UTC)
         await self.db.flush()
         return evidence
 
-    async def download_evidence(
-        self, tenant_id: UUID, evidence_id: UUID
-    ) -> tuple[bytes, Evidence]:
+    async def download_evidence(self, tenant_id: UUID, evidence_id: UUID) -> tuple[bytes, Evidence]:
         evidence = await self.get_evidence(tenant_id, evidence_id)
         content = await self.storage.download(evidence.storage_path)
         return content, evidence
@@ -207,9 +208,7 @@ class EvidenceService:
     async def get_evidence_summary(self, tenant_id: UUID) -> EvidenceSummary:
         base = select(Evidence).where(Evidence.tenant_id == tenant_id)
 
-        count_result = await self.db.execute(
-            select(func.count()).select_from(base.subquery())
-        )
+        count_result = await self.db.execute(select(func.count()).select_from(base.subquery()))
         total = count_result.scalar_one()
 
         status_q = await self.db.execute(
@@ -227,7 +226,7 @@ class EvidenceService:
         )
         pending_approval = pending_q.scalar_one()
 
-        threshold = datetime.now(timezone.utc) + timedelta(days=30)
+        threshold = datetime.now(UTC) + timedelta(days=30)
         expiring_q = await self.db.execute(
             select(func.count()).where(
                 Evidence.tenant_id == tenant_id,
@@ -253,9 +252,7 @@ class EvidenceService:
             total_size_bytes=total_size_bytes,
         )
 
-    async def get_control_evidence(
-        self, tenant_id: UUID, control_id: UUID
-    ) -> list[Evidence]:
+    async def get_control_evidence(self, tenant_id: UUID, control_id: UUID) -> list[Evidence]:
         result = await self.db.execute(
             select(Evidence)
             .join(ControlEvidence, ControlEvidence.evidence_id == Evidence.id)
