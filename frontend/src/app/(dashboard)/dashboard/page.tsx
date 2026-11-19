@@ -1,7 +1,9 @@
 "use client";
 
 import { useAuth } from "@/hooks/useAuth";
-import { Card } from "@/components/ui";
+import { Card, Badge } from "@/components/ui";
+import { getFrameworks, getControls, getFrameworkComplianceScore, getRisks } from "@/lib/mock-data";
+import Link from "next/link";
 
 const stats = [
   {
@@ -97,6 +99,55 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {/* Framework Compliance Overview */}
+      <Card>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-neutral">Framework Compliance</h2>
+          <Link href="/compliance" className="text-sm text-primary hover:underline">
+            View all
+          </Link>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {[
+            { id: "fw-soc2", name: "SOC 2 Type II", versionId: "fv-soc2-2017" },
+            { id: "fw-iso27001", name: "ISO 27001:2022", versionId: "fv-iso27001-2022" },
+          ].map((fw) => {
+            const score = getFrameworkComplianceScore(fw.versionId);
+            const controls = getControls(fw.versionId);
+            const implemented = controls.filter(
+              (c) => c.tenant_status?.status === "implemented"
+            ).length;
+            return (
+              <Link key={fw.id} href={`/compliance/${fw.id}`}>
+                <div className="flex items-center gap-4 rounded-lg border border-base-200 p-4 transition-colors hover:bg-base-200/50">
+                  <div className="flex-1">
+                    <p className="font-medium text-neutral">{fw.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {implemented}/{controls.length} controls implemented
+                    </p>
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-base-200">
+                      <div
+                        className={`h-1.5 rounded-full ${
+                          score >= 70 ? "bg-success" : score >= 50 ? "bg-warning" : "bg-error"
+                        }`}
+                        style={{ width: `${score}%` }}
+                      />
+                    </div>
+                  </div>
+                  <span
+                    className={`text-2xl font-bold ${
+                      score >= 70 ? "text-success" : score >= 50 ? "text-warning" : "text-error"
+                    }`}
+                  >
+                    {score}%
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </Card>
 
       <Card>
         <h2 className="mb-4 text-lg font-semibold text-neutral">Recent Activity</h2>
