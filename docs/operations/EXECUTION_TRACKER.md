@@ -20,7 +20,7 @@ command output from a real run.
 |---|---|
 | `ruff check .` / `ruff format --check .` | Pass |
 | `mypy app/` (strict) | Pass, 71 files |
-| `pytest -m "not performance"` | **447 passed** |
+| `pytest -m "not performance"` | **457 passed**, 60% line coverage (fresh venv from declared deps only) |
 | `bandit -r app/` | 2 reviewed, intentional placeholders (`nosec` annotated) |
 | `npm ci` (fresh copy) | Pass (lockfile regenerated) |
 | `next lint` / `tsc --noEmit` / `vitest --run` | Pass / Pass / 4 passed |
@@ -40,15 +40,18 @@ command output from a real run.
 | ID | Severity | Finding | Status |
 |---|---|---|---|
 | SF-001 | Critical | Path traversal in the local evidence store. A crafted filename could write files outside the tenant directory, including into another tenant's area. | Fixed. Filenames are sanitized and every read/write/delete is checked for containment. Tests in `tests/security/test_storage_path_traversal.py` |
-| SF-002 | High | The `SECRET_KEY` default (`CHANGE-ME-IN-PRODUCTION`) was accepted in any environment, so JWTs were forgeable if the env var was unset. | Fixed. The app refuses to start outside dev/test without a key of 32+ characters. |
+| SF-002 | High | The `SECRET_KEY` default (`CHANGE-ME-IN-PRODUCTION`) was accepted in any environment, so JWTs were forgeable if the env var was unset. | Fixed, and fails closed. `ENVIRONMENT` defaults to `production`, and outside dev/test the app refuses to start with a missing, short or known-placeholder key. docker-compose, CI and the tests opt into development/test explicitly. |
 | SF-003 | High | Auth was broken on fresh installs (passlib with bcrypt 5), and long passwords were silently truncated at 72 bytes. | Fixed. See ADR-004. |
 | SF-004 | Medium | Token refresh trusted the tenant and role in the old token, so removed or demoted members could keep refreshing. API authorization already re-checked the database, which limited the impact. | Fixed. Refresh now re-checks live membership. |
 | SF-005 | Medium | `?sort_by=` on risks was passed to `getattr(Risk, ...)` unchecked, so arbitrary attribute names caused 500s. | Fixed. Sort fields are allowlisted. |
 | SF-006 | Low | List filters were typed as `str`, so invalid enum values caused 500s instead of 422s. | Fixed. Filters are typed as enums. |
-| SF-007 | Low | The download `Content-Disposition` header was built from the raw filename. | Fixed. The filename is sanitized. |
+| SF-007 | Low | The download `Content-Disposition` header was built from the raw filename, which allowed header breakage and caused a 500 for non-Latin names. | Fixed. Filenames are sanitized and bidi overrides stripped, and the header uses an RFC 5987 `filename*`. |
 | SF-008 | Low | A rules-of-hooks violation on the framework detail page (conditional `useState`). | Fixed. |
 
 ## Technical Debt and Gaps
+
+- Coverage is 60%. Raise it as the API and integration tests land.
+- From review (out of scope here): no `Tenant.is_active` check on login or refresh, no refresh-token rotation or revocation, and login timing reveals which emails exist.
 
 - **Secret scanning is not in CI** after the Gitleaks removal. Replace it with the free `gitleaks` CLI or `trufflehog` (no licence needed).
 - **The S3 and Azure Blob evidence adapters don't exist.** Only `LocalStorage` is implemented, although earlier summaries claimed otherwise.

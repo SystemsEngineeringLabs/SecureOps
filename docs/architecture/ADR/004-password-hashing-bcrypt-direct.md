@@ -28,7 +28,10 @@ different long passwords with the same 72-byte prefix would both verify.
 
 ## Consequences
 
-- Existing `$2b$` hashes remain valid. No migration is needed.
+- Existing `$2a$`/`$2b$`/`$2y$` hashes remain valid. No schema migration is needed.
+- Any account created earlier with a password over 72 bytes (silently truncated
+  by passlib on older bcrypt) can no longer log in and must reset its password.
+  No production users existed at the time of this decision.
 - Passphrases longer than 72 bytes are rejected with a clear validation error.
 - Algorithm agility (for example, a later move to Argon2id) now has to be built
   explicitly. If we migrate, evaluate `pwdlib` with argon2 and rehash on login.

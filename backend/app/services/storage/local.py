@@ -2,13 +2,15 @@ import re
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
+from urllib.parse import quote
 
 import aiofiles
 import aiofiles.os
 
 from app.services.storage.base import StorageBackend
 
-_UNSAFE_CHARS = re.compile(r"[\x00-\x1f\x7f\"<>:|?*]")
+# Control chars, Windows-reserved chars, and Unicode bidi overrides (display spoofing).
+_UNSAFE_CHARS = re.compile(r"[\x00-\x1f\x7f\"<>:|?*\u202a-\u202e\u2066-\u2069]")
 _MAX_NAME_LENGTH = 200
 
 
@@ -21,6 +23,13 @@ def safe_filename(file_name: str) -> str:
     base = re.split(r"[\\/]", file_name)[-1]
     base = _UNSAFE_CHARS.sub("_", base).lstrip(". ").strip()
     return base[:_MAX_NAME_LENGTH] or "unnamed"
+
+
+def content_disposition(file_name: str) -> str:
+    """Build an attachment header safe for latin-1 transport (RFC 6266 / RFC 5987)."""
+    name = safe_filename(file_name)
+    ascii_fallback = name.encode("ascii", "replace").decode("ascii").replace("?", "_")
+    return f"attachment; filename=\"{ascii_fallback}\"; filename*=UTF-8''{quote(name, safe='')}"
 
 
 class LocalStorage(StorageBackend):

@@ -20,7 +20,7 @@ from app.schemas.evidence import (
 )
 from app.services.evidence_service import EvidenceService
 from app.services.storage.factory import get_storage_backend
-from app.services.storage.local import safe_filename
+from app.services.storage.local import content_disposition
 
 router = APIRouter(prefix="/evidence", tags=["Evidence"])
 
@@ -144,7 +144,7 @@ async def download_evidence(
         content=content,
         media_type=evidence.content_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{safe_filename(evidence.file_name)}"',
+            "Content-Disposition": content_disposition(evidence.file_name),
         },
     )
 

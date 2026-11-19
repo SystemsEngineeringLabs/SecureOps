@@ -26,7 +26,8 @@
 | pydantic | MIT | OK | Include license notice | Data validation |
 | pydantic-settings | MIT | OK | Include license notice | Settings management |
 | python-jose | MIT | OK | Include license notice | JWT handling |
-| passlib | BSD-3-Clause | OK | Include license notice | Password hashing |
+| bcrypt | Apache 2.0 | OK | Include license + NOTICE | Password hashing (replaced passlib, ADR-004) |
+| email-validator | Unlicense | OK | None required | Email validation (pydantic[email]) |
 | python-multipart | Apache 2.0 | OK | Include license + NOTICE | Form data parsing |
 | redis (redis-py) | MIT | OK | Include license notice | Redis client |
 | celery | BSD-3-Clause | OK | Include license notice | Task queue |

@@ -1,8 +1,12 @@
+import os
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
-import pytest
+# Must be set before app.core.config is imported (Settings() runs at import time).
+os.environ.setdefault("SECUREOPS_ENVIRONMENT", "test")
+
+import pytest  # noqa: E402
 
 from app.core.security import hash_password
 from app.models.enums import MembershipRole

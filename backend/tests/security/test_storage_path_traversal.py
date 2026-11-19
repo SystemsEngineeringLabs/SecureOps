@@ -57,3 +57,28 @@ class TestReadDeleteContainment:
         with pytest.raises(ValueError):
             await backend.delete("../outside.txt")
         assert victim.exists()
+
+
+@pytest.mark.security
+class TestDownloadHeader:
+    @pytest.mark.parametrize(
+        "name", ["报告.pdf", "evil‮fdp.exe", 'a"b\r\nX-Injected: 1.pdf', "plain.pdf"]
+    )
+    def test_content_disposition_is_latin1_safe(self, name):
+        from app.services.storage.local import content_disposition
+
+        header = content_disposition(name)
+        header.encode("latin-1")  # Starlette encodes headers as latin-1
+        assert "\r" not in header
+        assert "\n" not in header
+        assert header.startswith('attachment; filename="')
+
+    def test_unicode_name_preserved_via_rfc5987(self):
+        from app.services.storage.local import content_disposition
+
+        assert "filename*=UTF-8''%E6%8A%A5%E5%91%8A.pdf" in content_disposition("报告.pdf")
+
+    def test_bidi_override_stripped(self):
+        from app.services.storage.local import safe_filename
+
+        assert "‮" not in safe_filename("evil‮fdp.exe")
